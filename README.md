@@ -12,6 +12,10 @@
 
 Under the hood it's a thin TUI over the `herdr plugin` CLI (bash + python3, zero external dependencies).
 
+> **Also from the same author — [Command Center](https://github.com/speardragon/herdr-command-center).** One keybinding, every command: a popup that lists the commands you registered and runs them by slot key. It makes other plugins' actions easier to reach without remembering which prefix key they sit under, and gives the jobs you keep retyping a permanent slot.
+>
+> <img src="https://raw.githubusercontent.com/speardragon/herdr-command-center/main/docs/popup-list.png" width="520" alt="The Command Center popup listing commands in a grid, each with its own slot key">
+
 ## Quick start
 
 ```bash
@@ -93,6 +97,10 @@ and `perl`, and runs on bash 3.2.
 ## 한국어
 
 **[herdr](https://herdr.dev) 플러그인을 popup 하나로 관리하는 플러그인.** 모든 pane에 에이전트를 띄워두고 일할 때, 플러그인 하나 설치하자고 새 탭을 열고 `herdr plugin ...` 명령어를 기억해낼 필요가 없다 — 키 한 번이면 popup이 뜨고, 거기서 설치·업데이트·삭제·enable/disable·마켓플레이스 탐색까지 전부 끝난다.
+
+> **같은 제작자의 다른 플러그인 — [Command Center](https://github.com/speardragon/herdr-command-center).** 키 하나에 모든 명령. 등록해둔 명령을 popup에 나열하고 슬롯 키로 바로 실행한다. 다른 플러그인의 액션을 어떤 prefix 키에 넣어뒀는지 기억하지 않고도 꺼내 쓸 수 있고, 매번 다시 타이핑하던 반복 작업에 고정 자리를 줄 수 있다.
+>
+> <img src="https://raw.githubusercontent.com/speardragon/herdr-command-center/main/docs/popup-list.png" width="520" alt="Command Center popup — 등록된 명령이 슬롯 키와 함께 그리드로 나열된 화면">
 
 내부적으로는 전부 `herdr plugin` CLI를 그대로 호출하는 얇은 TUI다 (bash + python3, 외부 의존성 없음).
 
