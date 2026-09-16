@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Stand-in for the herdr CLI. Serves the fixture plugin list and records every
+# install instead of running one. Set STUB_DECLINE to a spec to have that
+# install exit non-zero, standing in for a declined trust preview.
+case "$1 $2" in
+  "plugin list")
+    cat "$STUB_PLUGINS"
+    ;;
+  "plugin install")
+    shift 2
+    printf '  [stub] trust preview for %s\n' "$*"
+    [ -n "$STUB_LOG" ] && printf 'install: %s\n' "$*" >> "$STUB_LOG"
+    if [ -n "$STUB_DECLINE" ] && [ "$1" = "$STUB_DECLINE" ]; then
+      printf '  declined\n'
+      exit 1
+    fi
+    printf '  installed\n'
+    ;;
+  *) ;;
+esac
+exit 0

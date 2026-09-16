@@ -79,7 +79,14 @@ herdr 0.7.4+ · `python3` (JSON parsing) · `git` (optional, update indicators) 
 herdr plugin link /path/to/herdr-plugin-manager
 herdr plugin action invoke ray.plugin-manager.open
 HERDR_PM_DRY_RUN=1 bash bin/manager.sh   # test the TUI in any terminal, no popup needed
+bash tests/run.sh                        # run the tests
+bash tests/run.sh bulk_loop              # ...or just the cases matching a name
 ```
+
+The tests stub out `git`, `curl` and the herdr CLI, so they need no network, no
+herdr install and no plugins of your own — `tests/cases/e2e_bulk_update.sh`
+drives the real popup against a fixture list of six plugins. Needs `python3`
+and `perl`, and runs on bash 3.2.
 
 ---
 
@@ -209,9 +216,17 @@ TUI 로직은 herdr popup 없이도 PTY에서 직접 테스트할 수 있다:
 HERDR_PM_DRY_RUN=1 bash bin/manager.sh
 ```
 
+테스트는 `git` · `curl` · herdr CLI를 전부 스텍으로 대체하므로 네트워크도, herdr 설치도, 본인 플러그인도 필요 없다. `tests/cases/e2e_bulk_update.sh`는 플러그인 6개짜리 픽스처 목록을 두고 실제 popup을 구동한다. `python3`·`perl` 필요, bash 3.2에서 동작한다.
+
+```bash
+bash tests/run.sh              # 전체
+bash tests/run.sh bulk_loop    # 이름이 맞는 케이스만
+```
+
 #### 구조
 
 - `herdr-plugin.toml` — popup pane(`manager`) + workspace action(`open`) 선언
 - `bin/manager.sh` — TUI 본체 (bash 3.2 호환 · 설치 목록/마켓플레이스 2개 뷰 · 버퍼 단일 출력 방식의 flicker-free 렌더링)
 - `bin/parse_list.py` — `herdr plugin list --json` → 탭 구분 행 변환
 - `bin/parse_market.py` — GitHub Search API 응답 → 탭 구분 행 변환
+- `tests/` — 오프라인 테스트 (`cases/` 케이스 · `lib/stubs/` git·curl·herdr 스텁 · `fixtures/` 플러그인 목록)

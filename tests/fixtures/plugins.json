@@ -1,0 +1,19 @@
+{"result":{"plugins":[
+ {"plugin_id":"t.alpha","name":"Alpha","version":"0.3.4","enabled":true,
+  "source":{"kind":"github","owner":"ex","repo":"alpha","requested_ref":"main",
+            "resolved_commit":"1111111111111111111111111111111111111111"}},
+ {"plugin_id":"t.bravo","name":"Bravo","version":"1.0.0","enabled":true,
+  "source":{"kind":"github","owner":"ex","repo":"bravo",
+            "resolved_commit":"2222222222222222222222222222222222222222"}},
+ {"plugin_id":"t.charlie","name":"Charlie","version":"0.1.0","enabled":true,
+  "source":{"kind":"github","owner":"ex","repo":"charlie","requested_ref":"v2.0.0",
+            "resolved_commit":"3333333333333333333333333333333333333333"}},
+ {"plugin_id":"t.current","name":"Delta","version":"5.0.0","enabled":true,
+  "source":{"kind":"github","owner":"ex","repo":"delta",
+            "resolved_commit":"dddddddddddddddddddddddddddddddddddddddd"}},
+ {"plugin_id":"t.pinned","name":"Echo","version":"0.1.0","enabled":true,
+  "source":{"kind":"github","owner":"ex","repo":"echo","requested_ref":"eeeeeee",
+            "resolved_commit":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}},
+ {"plugin_id":"t.linked","name":"Foxtrot","version":"0.1.0","enabled":true,
+  "source":{"kind":"local","path":"/tmp/foxtrot"}}
+]}}

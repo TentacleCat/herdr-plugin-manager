@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Stand-in for git ls-remote, so update checks never touch the network.
+# Answers from fixtures/remote.tsv: "<owner/repo>\t<sha>[\t<tag>\t<peeled sha>]".
+[ "$1" = "ls-remote" ] || exit 0
+shift
+
+url=""
+for arg in "$@"; do
+  case "$arg" in https://*) url="$arg"; break ;; esac
+done
+slug="${url#https://github.com/}"
+
+row="$(awk -F'\t' -v s="$slug" '$1==s{print; exit}' "$STUB_REMOTE" 2>/dev/null)"
+[ -n "$row" ] || exit 2
+
+IFS=$'\t' read -r _ sha tag peeled <<< "$row"
+printf '%s\tHEAD\n' "$sha"
+printf '%s\trefs/heads/main\n' "$sha"
+if [ -n "$tag" ]; then
+  printf '%s\trefs/tags/%s\n' "$sha" "$tag"
+  [ -n "$peeled" ] && printf '%s\trefs/tags/%s^{}\n' "$peeled" "$tag"
+fi

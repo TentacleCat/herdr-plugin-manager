@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Stand-in for the raw.githubusercontent.com manifest fetch. Returns a minimal
+# herdr-plugin.toml with the version fixtures/versions.tsv lists for the repo.
+url=""
+for arg in "$@"; do
+  case "$arg" in https://*) url="$arg" ;; esac
+done
+
+path="${url#https://raw.githubusercontent.com/}"
+slug="$(printf '%s\n' "$path" | cut -d/ -f1,2)"
+version="$(awk -F'\t' -v s="$slug" '$1==s{print $2; exit}' "$STUB_VERSIONS" 2>/dev/null)"
+[ -n "$version" ] || exit 22
+
+printf 'version = "%s"\n' "$version"
