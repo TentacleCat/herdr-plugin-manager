@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # herdr Plugin Manager — popup TUI over the `herdr plugin` CLI.
 #
-# Keys: j/k or ↑/↓ move · u update · e enable/disable · x uninstall
+# Keys: j/k or ↑/↓ move · u update · U update all · e enable/disable · x uninstall
 #       o open repo in browser · c edit plugins.json in VS Code · m marketplace
 #       r refresh · q/Esc quit
 # Marketplace view (m): browses GitHub repos tagged `herdr-plugin` (the same
@@ -339,7 +339,11 @@ check_footer() {
   local n
   n="$(awk -F'\t' '$2=="update"{c++} END{print c+0}' "$statusfile" 2>/dev/null)"
   if [ "${n:-0}" -gt 0 ]; then
-    put '  %b↑ %s update(s) available — press [u] to update%b\n' "$yellow" "$n" "$reset"
+    if [ "${n:-0}" -gt 1 ]; then
+      put '  %b↑ %s updates available — [u] this row · [U] all%b\n' "$yellow" "$n" "$reset"
+    else
+      put '  %b↑ 1 update available — press [u] to update%b\n' "$yellow" "$reset"
+    fi
   else
     put '  %ball plugins up to date%b\n' "$dim" "$reset"
   fi
@@ -462,7 +466,7 @@ draw() {
   fi
 
   put '\n'
-  put '  %b[j/k] move · [⏎] expand/run action · [u] update%b\n' "$dim" "$reset"
+  put '  %b[j/k] move · [⏎] expand/run action · [u] update · [U] update all%b\n' "$dim" "$reset"
   put '  %b[o] repo in browser · [c] edit plugins.json · [x] uninstall%b\n' "$dim" "$reset"
   put '  %b[e] enable/disable · [m] marketplace · [r] refresh · [q] quit%b\n' "$dim" "$reset"
   check_footer
@@ -593,24 +597,32 @@ invoke_action() {
 # pipe: herdr's own interactive trust preview (resolved commit, build
 # commands, actions, hooks, panes) plus its [y/N] confirmation is the whole
 # point — it needs the tty, and it only appears when stdin is interactive.
-run_mut() {
+# One herdr invocation with the popup's cursor handling, printing the outcome
+# line and returning herdr's exit status. Split out of run_mut so a batch can
+# chain several installs without a reload and a keypress between each.
+run_herdr() {
   local status=0
   printf '\n'
   if [ "$dry_run" = 1 ]; then
     printf '  %b[dry-run]%b %s' "$yellow" "$reset" "$herdr"
     printf ' %q' "$@"
     printf '\n'
-  else
-    printf '\033[?25h'
-    "$herdr" "$@"
-    status=$?
-    printf '\033[?25l'
-    if [ "$status" -eq 0 ]; then
-      printf '\n  %b✓ done%b\n' "$green" "$reset"
-    else
-      printf '\n  %b✗ cancelled or failed (exit %s)%b\n' "$red" "$status" "$reset"
-    fi
+    return 0
   fi
+  printf '\033[?25h'
+  "$herdr" "$@"
+  status=$?
+  printf '\033[?25l'
+  if [ "$status" -eq 0 ]; then
+    printf '\n  %b✓ done%b\n' "$green" "$reset"
+  else
+    printf '\n  %b✗ cancelled or failed (exit %s)%b\n' "$red" "$status" "$reset"
+  fi
+  return "$status"
+}
+
+run_mut() {
+  run_herdr "$@" || true
   pause_key
   load_plugins
   run_update_checks
@@ -697,6 +709,90 @@ do_update() {
     [ "$r_ref" != "-" ] && args+=(--ref "$r_ref")
   fi
   run_mut "${args[@]}"
+}
+
+# The plugins a bulk update would move, as "<id>\t<name>\t<spec>\t<ref>" rows:
+# github kind only (a linked checkout updates from its own working copy), known
+# to be behind, and not pinned to an exact sha.
+outdated_rows() {
+  local line o_id o_name o_ver o_en o_kind o_spec o_commit o_slug o_ref o_full
+  for line in "${rows[@]}"; do
+    IFS=$'\t' read -r o_id o_name o_ver o_en o_kind o_spec o_commit o_slug o_ref o_full <<< "$line"
+    [ "$o_kind" = github ] || continue
+    [ "$(plugin_status "$o_id")" = update ] || continue
+    # Moving an exact-sha pin is a deliberate per-plugin decision, so a batch
+    # passes over it silently; single-row [u] still offers the move.
+    if [ "$o_ref" != "-" ] && is_sha_pin "$o_ref" "$o_full"; then continue; fi
+    printf '%s\t%s\t%s\t%s\n' "$o_id" "$o_name" "$o_spec" "$o_ref"
+  done
+}
+
+# Updates every outdated plugin in one pass. The set is snapshotted up front
+# because each install reloads $rows, and the installs run from that array
+# rather than a piped read: herdr's trust preview gates every install from the
+# terminal, and a redirected stdin would swallow its prompt.
+do_update_all() {
+  if [ "$have_git" != 1 ]; then
+    msg="${yellow}install git to check for updates${reset}"
+    return
+  fi
+  if [ "$checked" != 1 ]; then
+    msg="${dim}still checking for updates — try again in a moment${reset}"
+    return
+  fi
+
+  local targets=() line
+  while IFS= read -r line; do
+    [ -n "$line" ] && targets+=("$line")
+  done < <(outdated_rows)
+
+  local n="${#targets[@]}"
+  if [ "$n" -eq 0 ]; then
+    msg="${green}✓${reset} nothing to update"
+    return
+  fi
+
+  local t_id t_name t_spec t_ref t_ver
+  printf '\n  %bupdating %s plugin(s):%b\n' "$bold" "$n" "$reset"
+  for line in "${targets[@]}"; do
+    IFS=$'\t' read -r t_id t_name t_spec t_ref <<< "$line"
+    t_ver="$(plugin_update_version "$t_id")"
+    if [ -n "$t_ver" ]; then
+      printf '    %b↑%b %s %b→ %s%b\n' "$yellow" "$reset" "$t_name" "$dim" "$t_ver" "$reset"
+    else
+      printf '    %b↑%b %s\n' "$yellow" "$reset" "$t_name"
+    fi
+  done
+  printf '\n  %bupdate %s plugin(s)? [y/N]%b ' "$yellow" "$n" "$reset"
+  local k=""
+  IFS= read -rsn1 k || true
+  case "$k" in
+    y|Y) ;;
+    *) msg="${dim}bulk update cancelled${reset}"; return ;;
+  esac
+
+  local ok=0 failed=0 args
+  for line in "${targets[@]}"; do
+    IFS=$'\t' read -r t_id t_name t_spec t_ref <<< "$line"
+    printf '\n  %b── %s%b\n' "$dim" "$t_name" "$reset"
+    args=(plugin install "$t_spec")
+    [ "$t_ref" != "-" ] && args+=(--ref "$t_ref")
+    # Declining one preview is not a batch failure: the rest still run.
+    if run_herdr "${args[@]}"; then
+      ok=$(( ok + 1 ))
+    else
+      failed=$(( failed + 1 ))
+    fi
+  done
+
+  pause_key
+  load_plugins
+  run_update_checks
+  if [ "$failed" -gt 0 ]; then
+    msg="${yellow}updated $ok of $n — $failed declined or failed${reset}"
+  else
+    msg="${green}✓${reset} updated $ok plugin(s)"
+  fi
 }
 
 do_toggle() {
@@ -1088,7 +1184,8 @@ while true; do
           a:*) invoke_action ;;
         esac
         ;;
-      u|U) do_update ;;
+      u) do_update ;;
+      U) do_update_all ;;
       e|E) do_toggle ;;
       x|X) do_uninstall ;;
       o|O) do_open_repo ;;
