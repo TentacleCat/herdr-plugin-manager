@@ -363,10 +363,44 @@ draw_flush() {
   buf=""
 }
 
+# Emits one already-colored row, right-padded to the terminal width so a
+# scrollbar cell ($2) lands flush against the right edge. Relies on $cols and
+# $show_scroll from the enclosing draw() (bash's dynamic scoping hands local
+# vars down to called functions). Strips known color codes to measure the
+# row's actual on-screen width before padding.
+emit_row() {
+  local line="$1" mark="$2" plain pad
+  if [ "$show_scroll" -ne 1 ]; then
+    put '%s\n' "$line"
+    return 0
+  fi
+  plain="$line"
+  plain="${plain//$bold/}"; plain="${plain//$dim/}"; plain="${plain//$red/}"
+  plain="${plain//$green/}"; plain="${plain//$yellow/}"; plain="${plain//$cyan/}"
+  plain="${plain//$reset/}"
+  pad=$(( cols - ${#plain} - 3 ))
+  [ "$pad" -lt 1 ] && pad=1
+  put '%s%*s%b\n' "$line" "$pad" '' "$mark"
+}
+
 draw() {
   buf=""
+  local cols
+  cols="$(tput cols 2>/dev/null)"
+  case "$cols" in ''|*[!0-9]*) cols=80 ;; esac
   put '  %bherdr Plugin Manager%b' "$bold" "$reset"
   [ "$dry_run" = 1 ] && put '  %b[dry-run]%b' "$yellow" "$reset"
+  if [ ${#rows[@]} -gt 0 ]; then
+    if [ "$have_git" = 1 ] && [ "$checked" = 1 ]; then
+      local n_outdated n_current
+      n_outdated="$(awk -F'\t' '$2=="update"{c++} END{print c+0}' "$statusfile" 2>/dev/null)"
+      n_current=$(( ${#rows[@]} - n_outdated ))
+      put '  %b(%d installed · %d up to date · %d outdated)%b' \
+        "$dim" "${#rows[@]}" "$n_current" "$n_outdated" "$reset"
+    else
+      put '  %b(%d installed)%b' "$dim" "${#rows[@]}" "$reset"
+    fi
+  fi
   put '\n\n'
 
   if [ ${#flat[@]} -eq 0 ]; then
@@ -376,13 +410,32 @@ draw() {
     [ "$sel" -ge "$max_vis" ] && start=$(( sel - max_vis + 1 ))
     end=$(( start + max_vis - 1 ))
     [ "$end" -ge ${#flat[@]} ] && end=$(( ${#flat[@]} - 1 ))
+
+    local show_scroll=0 sb_thumb=1 sb_pos=0 sb_max_start=0
+    if [ ${#flat[@]} -gt "$max_vis" ]; then
+      show_scroll=1
+      sb_thumb=$(( max_vis * max_vis / ${#flat[@]} ))
+      [ "$sb_thumb" -lt 1 ] && sb_thumb=1
+      [ "$sb_thumb" -gt "$max_vis" ] && sb_thumb=$max_vis
+      sb_max_start=$(( ${#flat[@]} - max_vis ))
+      [ "$sb_max_start" -gt 0 ] && sb_pos=$(( start * (max_vis - sb_thumb) / sb_max_start ))
+    fi
+
     i=$start
     while [ "$i" -le "$end" ]; do
       ent="${flat[$i]}"
-      local cursor="  " pre="" post=""
+      local cursor="  " pre="" post="" sb=" "
       if [ "$i" -eq "$sel" ]; then
         cursor="${cyan}▸ ${reset}"
         pre="$bold" post="$reset"
+      fi
+      if [ "$show_scroll" -eq 1 ]; then
+        local j=$(( i - start ))
+        if [ "$j" -ge "$sb_pos" ] && [ "$j" -lt "$(( sb_pos + sb_thumb ))" ]; then
+          sb="${cyan}┃${reset}"
+        else
+          sb="${dim}│${reset}"
+        fi
       fi
       case "$ent" in
         p:*)
@@ -393,6 +446,8 @@ draw() {
           if [ "$r_en" = 0 ]; then
             dot="${dim}○${reset}"
             state="  ${dim}(disabled)${reset}"
+          elif [ "$r_kind" = github ] && [ "$checked" != 1 ]; then
+            dot="${green}○${reset}"
           elif [ "$status" = update ]; then
             dot="${yellow}●${reset}"
             uver="$(plugin_update_version "$r_id")"
@@ -412,17 +467,20 @@ draw() {
               *) marker="${dim}›${reset}" ;;
             esac
           fi
-          put '%b  %b%b %b%-24.24s %-8.8s%b %b%b\n' \
+          local line
+          printf -v line '%b  %b%b %b%-24.24s %-8.8s%b %b%b' \
             "$idx" "$cursor" "$dot" "$pre" "$r_name" "$r_ver" "$post" "$marker" "$state"
+          emit_row "$line" "$sb"
           ;;
         a:*)
           split_act "${acts[${ent#a:}]}"
-          local akey akey_disp=""
+          local akey akey_disp="" line
           akey="$(action_key "$a_pid.$a_aid")"
           [ -n "$akey" ] && akey_disp="[$akey]"
-          put '     %b   %b↳%b %b%-14.14s%b %b%-26.26s%b %b%s%b\n' \
+          printf -v line '     %b   %b↳%b %b%-14.14s%b %b%-26.26s%b %b%s%b' \
             "$cursor" "$dim" "$reset" "$pre" "$a_aid" "$post" "$dim" "$a_title" "$reset" \
             "$yellow" "$akey_disp" "$reset"
+          emit_row "$line" "$sb"
           ;;
       esac
       i=$(( i + 1 ))
