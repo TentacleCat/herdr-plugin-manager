@@ -47,7 +47,7 @@ Run `herdr server reload-config`, then press `prefix+p` in any pane.
 | `e` | Toggle enable ↔ disable |
 | `x` | Uninstall after a `y/N` confirm (locally linked plugins are unlinked instead) |
 | `o` | Open the plugin's GitHub repo in your browser (subdir plugins open the subdir at the installed commit) |
-| `c` | Open the global plugin registry `~/.config/herdr/plugins.json` in VS Code (needs the `code` CLI) |
+| `c` | Open the global plugin registry `~/.config/herdr/plugins.json` with `HERDR_PM_EDITOR`, then `VISUAL`, then `EDITOR`; `code` is the compatibility fallback |
 | `m` | **Marketplace** — browse community plugins (below) |
 | `r` | Refresh the list (re-checks updates) |
 | `q` / `Esc` | Close |
@@ -75,7 +75,13 @@ Every mutating action prints the exact command instead of running it; read-only 
 
 ## Requirements
 
-herdr 0.7.4+ · `python3` (JSON parsing) · `git` (optional, update indicators) · `curl` (marketplace and update-target versions) · `open`/`xdg-open` (the `o` key) · `code` CLI (optional, the `c` key).
+herdr 0.7.4+ · `python3` (JSON parsing) · `git` (optional, update indicators) · `curl` (marketplace and update-target versions) · `open`/`xdg-open` (the `o` key) · an editor command on `PATH` (the `c` key; `code` is only the fallback).
+
+The `c` key resolves its editor in this order: `HERDR_PM_EDITOR`, `VISUAL`,
+`EDITOR`, then `code`. The selected command is run in the popup's foreground
+terminal, so terminal editors such as `nvim` work normally. `HERDR_PM_EDITOR`
+is useful when the Herdr server was started without the caller's shell
+environment; set it to one executable or a wrapper script.
 
 ## Development
 
@@ -135,7 +141,7 @@ description = "open plugin manager"
 | `e` | enable ↔ disable 토글 |
 | `x` | 삭제 — `y/N` 확인 후 uninstall (로컬 링크 플러그인이면 unlink) |
 | `o` | 선택한 플러그인의 GitHub repo를 브라우저로 열기 (subdir 플러그인은 설치된 커밋의 해당 subdir로 이동) |
-| `c` | 전역 플러그인 레지스트리 `~/.config/herdr/plugins.json`을 VS Code로 열기 (`code` CLI 필요) |
+| `c` | 전역 플러그인 레지스트리 `~/.config/herdr/plugins.json`을 `HERDR_PM_EDITOR` → `VISUAL` → `EDITOR` 순서로 열기 (`code`는 호환용 fallback) |
 | `m` | **마켓플레이스** — 커뮤니티 플러그인 탐색 (아래 참조) |
 | `r` | 목록 새로고침 (업데이트 재확인 포함) |
 | `q` / `Esc` | 닫기 |
@@ -209,7 +215,7 @@ install / update / uninstall / enable / disable / repo 열기 / plugins.json 열
 - `git` (선택 — 업데이트 표시등용. 없으면 표시등만 생략)
 - `curl` (macOS 기본 포함 — 마켓플레이스 조회 및 업데이트 대상 버전 조회용)
 - 브라우저 오프너 (`o` 키용 — macOS `open` / Linux `xdg-open`)
-- `code` CLI (선택 — `c` 키용. VS Code에서 "Shell Command: Install 'code' command" 실행)
+- `c` 키용 편집기 명령 (선택 — `HERDR_PM_EDITOR`, `VISUAL`, `EDITOR` 중 하나; 없으면 `code`를 fallback으로 사용)
 
 ### 개발
 

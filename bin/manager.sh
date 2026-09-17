@@ -2,7 +2,7 @@
 # herdr Plugin Manager — popup TUI over the `herdr plugin` CLI.
 #
 # Keys: j/k or ↑/↓ move · u update · U update all · e enable/disable · x uninstall
-#       o open repo in browser · c edit plugins.json in VS Code · m marketplace
+#       o open repo in browser · c edit plugins.json · m marketplace
 #       r refresh · q/Esc quit
 # Marketplace view (m): browses GitHub repos tagged `herdr-plugin` (the same
 # index behind https://herdr.dev/plugins/); Enter installs the selection.
@@ -886,24 +886,27 @@ open_url() {
   fi
 }
 
-# c — open the global plugins registry (~/.config/herdr/plugins.json) in VS Code.
+# c — open the global plugins registry (~/.config/herdr/plugins.json) in the
+# configured editor. HERDR_PM_EDITOR is an explicit override for servers whose
+# environment does not inherit the caller's VISUAL/EDITOR settings.
 do_plugins_json() {
+  local editor="${HERDR_PM_EDITOR:-${VISUAL:-${EDITOR:-code}}}"
   if [ ! -f "$plugins_json" ]; then
     msg="${red}not found: $plugins_json${reset}"
     return
   fi
   if [ "$dry_run" = 1 ]; then
-    msg="${yellow}[dry-run]${reset} code $plugins_json"
+    msg="${yellow}[dry-run]${reset} $editor $plugins_json"
     return
   fi
-  if ! command -v code >/dev/null 2>&1; then
-    msg="${red}'code' CLI not found — run 'Install code command' in VS Code${reset}"
+  if ! command -v "$editor" >/dev/null 2>&1; then
+    msg="${red}editor '$editor' not found — set HERDR_PM_EDITOR, VISUAL, or EDITOR${reset}"
     return
   fi
-  if code "$plugins_json" >/dev/null 2>&1; then
+  if "$editor" "$plugins_json"; then
     msg="${green}opened${reset} $plugins_json"
   else
-    msg="${red}failed to launch VS Code${reset}"
+    msg="${red}failed to launch $editor${reset}"
   fi
 }
 
