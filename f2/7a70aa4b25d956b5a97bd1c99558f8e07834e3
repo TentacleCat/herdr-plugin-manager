@@ -1,0 +1,23 @@
+bin/manager.sh
+  s_dcbba313b6468a::t_f208d7224dc055 5,889-891,893,899,902-903,906,909
+README.md
+  s_dcbba313b6468a::t_f208d7224dc055 50,78-84,144,218
+tests/cases/editor.sh
+  s_dcbba313b6468a::t_f208d7224dc055 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f27a70aa4b25d956b5a97bd1c99558f8e07834e3",
+  "prompts": {},
+  "sessions": {
+    "s_dcbba313b6468a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ad58-2f3a-7263-a55f-38066ddf8394",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "TentacleCat <131333217+TentacleCat@users.noreply.github.com>"
+    }
+  }
+}
