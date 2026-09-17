@@ -9,6 +9,18 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-17
+
+### Added
+
+- The header shows how many plugins are installed, and once the update check
+  finishes, how many are up to date vs outdated.
+- A scrollbar on the right edge of the installed list, shown once it has more
+  rows than fit in the 8-row visible window.
+- A github plugin shows a hollow green dot while its update check is still
+  running, instead of a filled dot that looks like a confirmed "up to date"
+  before the check has actually returned.
+
 ## [0.3.0] — 2026-09-16
 
 ### Added
@@ -95,7 +107,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 Initial release: a popup TUI over the `herdr plugin` CLI — list, install,
 update, enable/disable, uninstall, and a marketplace browser.
 
-[Unreleased]: https://github.com/speardragon/herdr-plugin-manager/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/speardragon/herdr-plugin-manager/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/speardragon/herdr-plugin-manager/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/speardragon/herdr-plugin-manager/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/speardragon/herdr-plugin-manager/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/speardragon/herdr-plugin-manager/compare/v0.2.0...v0.2.1
