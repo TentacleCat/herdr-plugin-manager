@@ -9,6 +9,15 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-09-18
+
+### Fixed
+
+- The `c` key now honors `HERDR_PM_EDITOR`, then `VISUAL`, then `EDITOR`,
+  falling back to `code`, instead of always invoking `code`. The selected
+  editor runs in the popup's foreground terminal, so terminal editors such
+  as `nvim` work correctly.
+
 ## [0.4.0] — 2026-09-17
 
 ### Added
