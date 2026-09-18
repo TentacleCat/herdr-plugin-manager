@@ -217,6 +217,12 @@ install / update / uninstall / enable / disable / repo 열기 / plugins.json 열
 - 브라우저 오프너 (`o` 키용 — macOS `open` / Linux `xdg-open`)
 - `c` 키용 편집기 명령 (선택 — `HERDR_PM_EDITOR`, `VISUAL`, `EDITOR` 중 하나; 없으면 `code`를 fallback으로 사용)
 
+`c` 키는 `HERDR_PM_EDITOR` → `VISUAL` → `EDITOR` → `code` 순서로 편집기를
+찾는다. 선택된 명령은 팝업의 foreground 터미널에서 그대로 실행되므로 `nvim`
+같은 터미널 편집기도 정상 동작한다. `HERDR_PM_EDITOR`는 herdr 서버가 사용자
+셸 환경(`VISUAL`/`EDITOR`)을 물려받지 못하는 상태로 떠 있을 때 유용하며,
+실행 파일 하나 또는 래퍼 스크립트로 지정한다.
+
 ### 개발
 
 ```bash
